@@ -2,6 +2,7 @@ package com.jun.baiduidentityauthapp.activity;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.media.MediaRecorder;
 import android.media.MediaRecorder.OnInfoListener;
 import android.os.Bundle;
@@ -171,4 +172,9 @@ public class IDCardDetectionActivity extends Activity implements OnClickListener
         mCameraPreview.releaseRes();
         super.onDestroy();
     }
+
+//    @Override
+//    public void onConfigurationChanged(Configuration newConfig) {
+//        super.onConfigurationChanged(newConfig);
+//    }
 }

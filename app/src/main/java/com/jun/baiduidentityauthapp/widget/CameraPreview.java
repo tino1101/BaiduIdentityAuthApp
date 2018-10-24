@@ -1,6 +1,7 @@
 package com.jun.baiduidentityauthapp.widget;
 
 import android.content.Context;
+import android.content.res.Configuration;
 import android.content.res.TypedArray;
 import android.graphics.PixelFormat;
 import android.graphics.SurfaceTexture;
@@ -321,12 +322,29 @@ public class CameraPreview extends GLSurfaceView implements GLSurfaceView.Render
     public void setCameraFrontBack(int n) {
         nCameraFrontBack = n;
     }
+//
+//    private void setDisplayOrientation() {
+//        try {
+//            Camera.Parameters parameters = mCamera.getParameters();
+//            if (this.getResources().getConfiguration().orientation != Configuration.ORIENTATION_LANDSCAPE) {
+//                parameters.set("orientation", "portrait");
+//                mCamera.setDisplayOrientation(0);
+//            } else {
+//                parameters.set("orientation", "landscape");
+//                mCamera.setDisplayOrientation(270);
+//            }
+//            mCamera.setParameters(parameters);
+//        } catch (Exception ex) {
+//            mCamera.release();
+//        }
+//    }
 
     private boolean safeCameraOpen(int id) {
         boolean qOpened = false;
 
         try {
             mCamera = Camera.open(id);
+//            setDisplayOrientation();
             qOpened = (mCamera != null);
         } catch (Exception e) {
             Log.e("TAG", "failed to open Camera");
@@ -349,6 +367,7 @@ public class CameraPreview extends GLSurfaceView implements GLSurfaceView.Render
         }
 
         mCamera = Camera.open();
+//        setDisplayOrientation();
     }
 
     private void openBackCamera() {
@@ -363,6 +382,7 @@ public class CameraPreview extends GLSurfaceView implements GLSurfaceView.Render
         }
 
         mCamera = Camera.open();
+//        setDisplayOrientation();
     }
 
     private void initTex() {
