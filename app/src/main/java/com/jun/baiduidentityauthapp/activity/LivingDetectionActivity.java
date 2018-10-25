@@ -13,8 +13,10 @@ import android.view.View.OnClickListener;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.RelativeLayout;
 import com.jun.baiduidentityauthapp.R;
 import com.jun.baiduidentityauthapp.model.FaceVerifyResponse;
+import com.jun.baiduidentityauthapp.util.UiUtil;
 import com.jun.baiduidentityauthapp.widget.CustomDialog;
 import com.jun.baiduidentityauthapp.util.IdentityAuthHelper;
 import com.jun.baiduidentityauthapp.util.IdentityAuthHelper.CallBack;
@@ -62,6 +64,11 @@ public class LivingDetectionActivity extends Activity implements OnClickListener
 
     private void initViews() {
         mCameraPreview = findViewById(R.id.camera);
+        RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) mCameraPreview.getLayoutParams();
+        params.width = UiUtil.getScreenWidth(this) * 64 / 100;
+        params.height = UiUtil.getScreenWidth(this) * 64 / 100;
+        params.topMargin = UiUtil.dip2px(this, 100);
+        mCameraPreview.setLayoutParams(params);
         mCameraPreview.setMaxDuration(10000);
         mCameraPreview.setOnInfoListener(this);
         mCameraPreview.setOnTakePicCallBack(new CameraPreview.OnTakePicCallBack() {
