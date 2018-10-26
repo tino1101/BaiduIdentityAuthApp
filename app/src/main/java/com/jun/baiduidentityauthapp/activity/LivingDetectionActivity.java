@@ -2,8 +2,6 @@ package com.jun.baiduidentityauthapp.activity;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.media.MediaRecorder;
-import android.media.MediaRecorder.OnInfoListener;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -16,16 +14,16 @@ import android.widget.Button;
 import android.widget.RelativeLayout;
 import com.jun.baiduidentityauthapp.R;
 import com.jun.baiduidentityauthapp.model.FaceVerifyResponse;
-import com.jun.baiduidentityauthapp.util.UiUtil;
-import com.jun.baiduidentityauthapp.widget.CustomDialog;
 import com.jun.baiduidentityauthapp.util.IdentityAuthHelper;
 import com.jun.baiduidentityauthapp.util.IdentityAuthHelper.CallBack;
+import com.jun.baiduidentityauthapp.util.UiUtil;
 import com.jun.baiduidentityauthapp.widget.CameraPreview;
+import com.jun.baiduidentityauthapp.widget.CustomDialog;
 
 /**
  * 活体检测
  */
-public class LivingDetectionActivity extends Activity implements OnClickListener, OnInfoListener {
+public class LivingDetectionActivity extends Activity implements OnClickListener {
 
     private CameraPreview mCameraPreview;
     private Button takePicButton;
@@ -65,12 +63,10 @@ public class LivingDetectionActivity extends Activity implements OnClickListener
     private void initViews() {
         mCameraPreview = findViewById(R.id.camera);
         RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) mCameraPreview.getLayoutParams();
-        params.width = UiUtil.getScreenWidth(this) * 64 / 100;
-        params.height = UiUtil.getScreenWidth(this) * 64 / 100;
+        params.width = UiUtil.getScreenWidth(this) * 280 / 375;
+        params.height = UiUtil.getScreenWidth(this) * 280 / 375;
         params.topMargin = UiUtil.dip2px(this, 100);
         mCameraPreview.setLayoutParams(params);
-        mCameraPreview.setMaxDuration(10000);
-        mCameraPreview.setOnInfoListener(this);
         mCameraPreview.setOnTakePicCallBack(new CameraPreview.OnTakePicCallBack() {
             @Override
             public void onPictureTaken(byte[] bytes) {
@@ -90,13 +86,6 @@ public class LivingDetectionActivity extends Activity implements OnClickListener
                 mCameraPreview.takePicture();
                 break;
             default:
-        }
-    }
-
-    @Override
-    public void onInfo(MediaRecorder mr, int what, int extra) {
-        if (what == MediaRecorder.MEDIA_RECORDER_INFO_MAX_DURATION_REACHED) {
-            takePicButton.performClick();
         }
     }
 

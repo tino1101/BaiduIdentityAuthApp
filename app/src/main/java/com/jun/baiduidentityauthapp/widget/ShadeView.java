@@ -31,7 +31,7 @@ public class ShadeView extends View {
     private void init() {
         path = new Path();
         xOffset = UiUtil.getScreenWidth(context) / 2;
-        radius = UiUtil.getScreenWidth(context) * 64 / 100 / 2;
+        radius = UiUtil.getScreenWidth(context) * 280 / 375 / 2;
         yOffset = radius + UiUtil.dip2px(context, 100);
         path.addCircle(xOffset, yOffset, radius, Path.Direction.CW);
     }

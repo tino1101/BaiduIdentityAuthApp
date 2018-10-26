@@ -26,7 +26,8 @@
                 android:screenOrientation="portrait" />
         <activity
                 android:name=".activity.IDCardDetectionActivity"
-                android:screenOrientation="portrait" />
+                android:screenOrientation="landscape"
+                android:configChanges="orientation|keyboardHidden|screenSize" />
                 <!--android:screenOrientation="landscape"-->
                 <!--android:configChanges="orientation|keyboardHidden|screenSize"-->
 

@@ -2,9 +2,6 @@ package com.jun.baiduidentityauthapp.activity;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.content.res.Configuration;
-import android.media.MediaRecorder;
-import android.media.MediaRecorder.OnInfoListener;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -18,16 +15,16 @@ import android.widget.Button;
 import com.jun.baiduidentityauthapp.R;
 import com.jun.baiduidentityauthapp.model.FaceMatchResponse;
 import com.jun.baiduidentityauthapp.model.IDCardDetectionResponse;
-import com.jun.baiduidentityauthapp.widget.CustomDialog;
 import com.jun.baiduidentityauthapp.util.IdentityAuthHelper;
 import com.jun.baiduidentityauthapp.util.IdentityAuthHelper.CallBack;
 import com.jun.baiduidentityauthapp.util.ToastUtil;
 import com.jun.baiduidentityauthapp.widget.CameraPreview;
+import com.jun.baiduidentityauthapp.widget.CustomDialog;
 
 /**
  * 身份证检测识别
  */
-public class IDCardDetectionActivity extends Activity implements OnClickListener, OnInfoListener {
+public class IDCardDetectionActivity extends Activity implements OnClickListener {
 
     private CameraPreview mCameraPreview;
     private Button takePicButton;
@@ -75,8 +72,7 @@ public class IDCardDetectionActivity extends Activity implements OnClickListener
 
     private void initViews() {
         mCameraPreview = findViewById(R.id.camera);
-        mCameraPreview.setMaxDuration(10000);
-        mCameraPreview.setOnInfoListener(this);
+        mCameraPreview.setRotation(getWindowManager().getDefaultDisplay().getRotation());
         mCameraPreview.setOnTakePicCallBack(new CameraPreview.OnTakePicCallBack() {
             @Override
             public void onPictureTaken(byte[] bytes) {
@@ -96,13 +92,6 @@ public class IDCardDetectionActivity extends Activity implements OnClickListener
                 mCameraPreview.takePicture();
                 break;
             default:
-        }
-    }
-
-    @Override
-    public void onInfo(MediaRecorder mr, int what, int extra) {
-        if (what == MediaRecorder.MEDIA_RECORDER_INFO_MAX_DURATION_REACHED) {
-            takePicButton.performClick();
         }
     }
 

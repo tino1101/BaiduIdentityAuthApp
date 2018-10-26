@@ -1,36 +1,27 @@
 package com.jun.baiduidentityauthapp.widget;
 
 import android.content.Context;
-import android.content.res.Configuration;
 import android.content.res.TypedArray;
 import android.graphics.PixelFormat;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
 import android.hardware.Camera.PictureCallback;
 import android.hardware.Camera.ShutterCallback;
-import android.hardware.Camera.Size;
-import android.media.CamcorderProfile;
-import android.media.MediaRecorder;
-import android.media.MediaRecorder.OnInfoListener;
 import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
-import android.os.Environment;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.view.Surface;
 import android.view.SurfaceHolder;
 import com.jun.baiduidentityauthapp.R;
 import com.jun.baiduidentityauthapp.util.ToastUtil;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
-import java.io.File;
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 
 public class CameraPreview extends GLSurfaceView implements GLSurfaceView.Renderer, SurfaceTexture.OnFrameAvailableListener {
@@ -64,7 +55,6 @@ public class CameraPreview extends GLSurfaceView implements GLSurfaceView.Render
 
 
     private static String LOG_TAG = CameraPreview.class.getName();
-    private List<Size> mSupportedPreviewSizes;
 
     private int[] mTextureId;
     private int[] fbo = new int[]{0};
@@ -74,8 +64,6 @@ public class CameraPreview extends GLSurfaceView implements GLSurfaceView.Render
     private FloatBuffer pVertex;
     private FloatBuffer pTexCoord;
     private ByteBuffer pixelBuffer;
-    private MediaRecorder mMediarecorder;
-    private File mOutputFile;
     private Boolean isPreviewing;
     private int nCameraFrontBack; //0: front  1:back
     private int hProgram;
@@ -89,20 +77,10 @@ public class CameraPreview extends GLSurfaceView implements GLSurfaceView.Render
     public static final int CameraFront = 0;
     public static final int CameraBack = 1;
 
+    private int rotation;
+
     private OnTakePicCallBack mOnTakePicCallBack;
     private OnDrawFrameCallback mOnDrawFrameCallback;
-
-    private int mMaxDuration;
-
-    private OnInfoListener mOnInfoListener;
-
-    public void setOnInfoListener(OnInfoListener onInfoListener) {
-        this.mOnInfoListener = onInfoListener;
-    }
-
-    public void setMaxDuration(int maxDuration) {
-        this.mMaxDuration = maxDuration;
-    }
 
     public interface OnDrawFrameCallback {
         void call(byte[] rgba, int w, int h);
@@ -166,8 +144,6 @@ public class CameraPreview extends GLSurfaceView implements GLSurfaceView.Render
     }
 
     public void releaseRes() {
-        releaseMediaRecorder();
-
         isPreviewing = false;
         if (mCamera != null) {
             mCamera.stopPreview();
@@ -253,66 +229,6 @@ public class CameraPreview extends GLSurfaceView implements GLSurfaceView.Render
         initCamera();
     }
 
-    public File startRecordVideo() {
-        mMediarecorder = new MediaRecorder();// 创建mediarecorder对象
-        mCamera.unlock();
-        mMediarecorder.setCamera(mCamera);
-        // 设置录制视频源为Camera(相机)
-        mMediarecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
-        mMediarecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
-        // 设置录制完成后视频的封装格式THREE_GPP为3gp.MPEG_4为mp4
-        mMediarecorder
-                .setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
-        // 设置录制的视频编码h263 h264
-        CamcorderProfile profile;
-        if (CamcorderProfile.hasProfile(CamcorderProfile.QUALITY_720P)) {
-            profile = CamcorderProfile.get(CamcorderProfile.QUALITY_720P);
-        } else {
-            profile = CamcorderProfile.get(CamcorderProfile.QUALITY_HIGH);
-        }
-        mMediarecorder.setVideoSize(profile.videoFrameWidth, profile.videoFrameHeight);
-        mMediarecorder.setVideoEncodingBitRate(1280 * 720);
-        //        mediarecorder.setVideoEncodingBitRate(4000000);
-        mMediarecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
-        mMediarecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
-        if (mMaxDuration > 0) {
-            mMediarecorder.setMaxDuration(mMaxDuration);
-        }
-        if (mOnInfoListener != null) {
-            mMediarecorder.setOnInfoListener(mOnInfoListener);
-        }
-        // 设置视频录制的分辨率。必须放在设置编码和格式的后面，否则报错
-        //
-        //        // 设置录制的视频帧率。必须放在设置编码和格式的后面，否则报错
-        //        mediarecorder.setVideoFrameRate(30);
-        mMediarecorder.setOrientationHint(270);
-
-        // 设置视频文件输出的路径
-        mOutputFile = getOutputMediaFile();
-        if (mOutputFile == null) {
-            return null;
-        }
-        mMediarecorder.setOutputFile(mOutputFile.getPath());
-        try {
-            // 准备录制
-            mMediarecorder.prepare();
-            // 开始录制
-            mMediarecorder.start();
-        } catch (IllegalStateException e) {
-            releaseMediaRecorder();
-            e.printStackTrace();
-        } catch (IOException e) {
-            releaseMediaRecorder();
-            e.printStackTrace();
-        }
-
-        return mOutputFile;
-    }
-
-    public void stopRecordCamera() {
-        releaseMediaRecorder();
-    }
-
     public void takePicture() {
         if (isPreviewing && mCamera != null) {
             mCamera.takePicture(mShutterCallback, null, mJpegPictureCallback);
@@ -322,30 +238,47 @@ public class CameraPreview extends GLSurfaceView implements GLSurfaceView.Render
     public void setCameraFrontBack(int n) {
         nCameraFrontBack = n;
     }
-//
-//    private void setDisplayOrientation() {
-//        try {
-//            Camera.Parameters parameters = mCamera.getParameters();
-//            if (this.getResources().getConfiguration().orientation != Configuration.ORIENTATION_LANDSCAPE) {
-//                parameters.set("orientation", "portrait");
-//                mCamera.setDisplayOrientation(0);
-//            } else {
-//                parameters.set("orientation", "landscape");
-//                mCamera.setDisplayOrientation(270);
-//            }
-//            mCamera.setParameters(parameters);
-//        } catch (Exception ex) {
-//            mCamera.release();
-//        }
-//    }
+
+    public void setRotation(int rotation) {
+        this.rotation = rotation;
+    }
+
+    public void setCameraDisplayOrientation(int cameraId) {
+        Camera.CameraInfo info = new Camera.CameraInfo();
+        Camera.getCameraInfo(cameraId, info);
+        int degrees = 0;
+        switch (rotation) {
+            case Surface.ROTATION_0:
+                degrees = 0;
+                break;
+            case Surface.ROTATION_90:
+                degrees = 90;
+                break;
+            case Surface.ROTATION_180:
+                degrees = 180;
+                break;
+            case Surface.ROTATION_270:
+                degrees = 270;
+                break;
+        }
+
+        int result;
+        if (info.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
+            result = (info.orientation + degrees) % 360;
+            result = (360 - result) % 360;
+        } else {
+            result = (info.orientation - degrees + 360) % 360;
+        }
+        mCamera.setDisplayOrientation(result);
+    }
 
     private boolean safeCameraOpen(int id) {
         boolean qOpened = false;
 
         try {
             mCamera = Camera.open(id);
-//            setDisplayOrientation();
             qOpened = (mCamera != null);
+            if (qOpened) setCameraDisplayOrientation(id);
         } catch (Exception e) {
             Log.e("TAG", "failed to open Camera");
             ToastUtil.showToast(getContext(), "failed to open Camera");
@@ -367,7 +300,6 @@ public class CameraPreview extends GLSurfaceView implements GLSurfaceView.Render
         }
 
         mCamera = Camera.open();
-//        setDisplayOrientation();
     }
 
     private void openBackCamera() {
@@ -382,7 +314,6 @@ public class CameraPreview extends GLSurfaceView implements GLSurfaceView.Render
         }
 
         mCamera = Camera.open();
-//        setDisplayOrientation();
     }
 
     private void initTex() {
@@ -445,87 +376,6 @@ public class CameraPreview extends GLSurfaceView implements GLSurfaceView.Render
             Log.d(LOG_TAG, "Error starting camera preview: " + e.getMessage());
         }
     }
-
-
-    private void releaseMediaRecorder() {
-        if (mMediarecorder != null) {
-            // clear recorder configuration
-            mMediarecorder.reset();
-            // release the recorder object
-            mMediarecorder.release();
-            mMediarecorder = null;
-            // Lock camera for later use i.e taking it back from MediaRecorder.
-            // MediaRecorder doesn't need it anymore and we will release it if the activity pauses.
-            if (mCamera != null) {
-                mCamera.lock();
-            }
-        }
-    }
-
-
-    private File getOutputMediaFile() {
-
-        File parentFile = null;
-
-        if (Environment.getExternalStorageState().equalsIgnoreCase(Environment.MEDIA_MOUNTED)) {
-            parentFile = Environment.getExternalStorageDirectory();
-        } else {
-            parentFile = getContext().getApplicationContext().getCacheDir();
-        }
-
-        File mediaStorageDir = new File(parentFile, "Jun/video");
-
-        if (!mediaStorageDir.exists()) {
-            if (!mediaStorageDir.mkdirs()) {
-                Log.d("CameraSample", "failed to create directory");
-                return null;
-            }
-        }
-
-        // Create a media file name
-        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-
-        File mediaFile = new File(mediaStorageDir.getPath() + File.separator +
-                "VID_" + timeStamp + ".mp4");
-        return mediaFile;
-    }
-
-    private Camera.Size getOptimalPreviewSize(List<Size> sizes, int w, int h) {
-        final double ASPECT_TOLERANCE = 0.1;
-        double targetRatio = (double) h / w;
-
-        if (sizes == null)
-            return null;
-
-        Camera.Size optimalSize = null;
-        double minDiff = Double.MAX_VALUE;
-
-        int targetHeight = h;
-
-        for (Camera.Size size : sizes) {
-            double ratio = (double) size.height / size.width;
-            if (Math.abs(ratio - targetRatio) > ASPECT_TOLERANCE)
-                continue;
-
-            if (Math.abs(size.height - targetHeight) < minDiff) {
-                optimalSize = size;
-                minDiff = Math.abs(size.height - targetHeight);
-            }
-        }
-
-        if (optimalSize == null) {
-            minDiff = Double.MAX_VALUE;
-            for (Camera.Size size : sizes) {
-                if (Math.abs(size.height - targetHeight) < minDiff) {
-                    optimalSize = size;
-                    minDiff = Math.abs(size.height - targetHeight);
-                }
-            }
-        }
-
-        return optimalSize;
-    }
-
 
     @Override
     public void onDrawFrame(GL10 gl) {
