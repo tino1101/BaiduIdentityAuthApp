@@ -12,7 +12,7 @@
             app:cameraPosition="front"
             android:layout_centerHorizontal="true"/>
 
-    <com.jun.baiduidentityauthapp.widget.ShadeView
+    <com.jun.baiduidentityauthapp.widget.FaceScanView
             android:layout_width="match_parent"
             android:layout_height="match_parent"/>
 
