@@ -14,6 +14,7 @@ public class FaceScanView extends View {
     private int xOffset;
     private int yOffset;
     private Paint paint;
+    private int viewWidth;
 
     public FaceScanView(Context context) {
         super(context);
@@ -28,23 +29,39 @@ public class FaceScanView extends View {
     }
 
     private void init() {
+        viewWidth = UiUtil.getScreenWidth(context) * 260 / 375 + 2 * UiUtil.dip2px(context, 20);
         paint = new Paint();
         path = new Path();
-        xOffset = UiUtil.getScreenWidth(context) / 2;
+        xOffset = viewWidth / 2;
         radius = UiUtil.getScreenWidth(context) * 260 / 375 / 2;
-        yOffset = radius + getFinderMarginTop();
+        yOffset = radius + UiUtil.dip2px(context, 20);
         path.addCircle(xOffset, yOffset, radius, Path.Direction.CW);
     }
 
-    private int getFinderMarginTop() {
-        return UiUtil.dip2px(context, 100);
+    public int getViewWidth() {
+        return viewWidth;
     }
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+        int widthSize = viewWidth;
+        int heightSize = widthSize;
+        int HEIGHT_MODE = MeasureSpec.getMode(heightMeasureSpec);
+        int HEIGHT_SIZE = MeasureSpec.getSize(heightMeasureSpec);
+        int WIDTH_MODE = MeasureSpec.getMode(widthMeasureSpec);
+        int WIDTH_SIZE = MeasureSpec.getSize(widthMeasureSpec);
+        if (HEIGHT_MODE == MeasureSpec.EXACTLY) {
+            heightSize = HEIGHT_SIZE;
+        } else if (HEIGHT_MODE == MeasureSpec.AT_MOST) {
+            heightSize = Math.min(HEIGHT_SIZE, heightSize);
+        }
+        if (WIDTH_MODE == MeasureSpec.EXACTLY) {
+            widthSize = WIDTH_SIZE;
+        } else if (WIDTH_MODE == MeasureSpec.AT_MOST) {
+            widthSize = Math.min(WIDTH_SIZE, widthSize);
+        }
+        setMeasuredDimension(widthSize, heightSize);
     }
-
 
     @Override
     protected void onDraw(Canvas canvas) {
@@ -53,15 +70,10 @@ public class FaceScanView extends View {
         canvas.clipPath(path, Region.Op.XOR);
         canvas.drawColor(Color.BLACK);
         canvas.restore();
-
         Bitmap insideCircleBitmap = BitmapFactory.decodeResource(context.getResources(), R.drawable.auth_scan_inside_circle);
-        Rect insideCircleRect = new Rect(UiUtil.getScreenWidth(context) * 57 / 375, getFinderMarginTop(),
-                UiUtil.getScreenWidth(context) - UiUtil.getScreenWidth(context) * 57 / 375, getFinderMarginTop() + UiUtil.getScreenWidth(context) * 260 / 375);
-
+        Rect insideCircleRect = new Rect(0, 0, viewWidth, viewWidth);
         Bitmap circleBitmap = BitmapFactory.decodeResource(context.getResources(), R.drawable.auth_scan_circle);
-        Rect circleRect = new Rect(UiUtil.getScreenWidth(context) * 57 / 375 - UiUtil.dip2px(context, 10), getFinderMarginTop() - UiUtil.dip2px(context, 10),
-                UiUtil.getScreenWidth(context) - UiUtil.getScreenWidth(context) * 57 / 375 + UiUtil.dip2px(context, 10), getFinderMarginTop() + UiUtil.getScreenWidth(context) * 260 / 375 + UiUtil.dip2px(context, 10));
-
+        Rect circleRect = new Rect(0, 0, viewWidth, viewWidth);
         canvas.drawBitmap(insideCircleBitmap, null, insideCircleRect, paint);
         canvas.drawBitmap(circleBitmap, null, circleRect, paint);
     }

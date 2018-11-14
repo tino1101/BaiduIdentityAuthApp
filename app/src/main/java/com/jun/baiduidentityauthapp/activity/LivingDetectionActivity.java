@@ -19,6 +19,7 @@ import com.jun.baiduidentityauthapp.util.IdentityAuthHelper.CallBack;
 import com.jun.baiduidentityauthapp.util.UiUtil;
 import com.jun.baiduidentityauthapp.widget.CameraPreview;
 import com.jun.baiduidentityauthapp.widget.CustomDialog;
+import com.jun.baiduidentityauthapp.widget.FaceScanView;
 
 /**
  * 活体检测
@@ -29,6 +30,7 @@ public class LivingDetectionActivity extends Activity implements OnClickListener
     private Button takePicButton;
     public static String livingImage = "";
     private CustomDialog dialog;
+    private FaceScanView faceScanView;
 
     private Handler mHandler = new Handler() {
         @Override
@@ -62,9 +64,10 @@ public class LivingDetectionActivity extends Activity implements OnClickListener
 
     private void initViews() {
         mCameraPreview = findViewById(R.id.camera);
+        faceScanView = findViewById(R.id.faceView);
         RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) mCameraPreview.getLayoutParams();
-        params.width = UiUtil.getScreenWidth(this) * 280 / 375;
-        params.height = UiUtil.getScreenWidth(this) * 280 / 375;
+        params.width = faceScanView.getViewWidth();
+        params.height = faceScanView.getViewWidth();
         params.topMargin = UiUtil.dip2px(this, 100);
         mCameraPreview.setLayoutParams(params);
         mCameraPreview.setOnTakePicCallBack(new CameraPreview.OnTakePicCallBack() {
