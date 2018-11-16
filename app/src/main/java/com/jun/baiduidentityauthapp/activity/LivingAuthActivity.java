@@ -2,6 +2,7 @@ package com.jun.baiduidentityauthapp.activity;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -29,8 +30,13 @@ public class LivingAuthActivity extends Activity implements OnClickListener {
                     ToastUtil.showToast(LivingAuthActivity.this, "请先配置 API KEY 和 SECRET KEY");
                     return;
                 }
-                Intent i = new Intent(this, LivingDetectionActivity.class);
-                startActivity(i);
+                Intent intent;
+//                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+//                    intent = new Intent(this, com.jun.baiduidentityauthapp.activity.api21.LivingDetectionActivity.class);
+//                } else {
+                    intent = new Intent(this, com.jun.baiduidentityauthapp.activity.LivingDetectionActivity.class);
+//                }
+                startActivity(intent);
                 finish();
                 break;
             default:

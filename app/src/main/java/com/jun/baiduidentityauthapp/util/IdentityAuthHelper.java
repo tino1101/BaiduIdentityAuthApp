@@ -31,8 +31,8 @@ import java.util.Map;
  */
 public class IdentityAuthHelper {
 
-    public static final String API_KEY = "Your API KEY";
-    public static final String SECRET_KEY = "Your SECRET KEY";
+    public static final String API_KEY = "67czz3NqpDGYSuDStKLpk3cn";
+    public static final String SECRET_KEY = "pzvQQaG67zeAc2wo53aihMDXbGPI6dPa";
 
     private IdentityAuthService faceService;
 

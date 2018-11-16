@@ -20,6 +20,20 @@
             android:layout_centerHorizontal="true"
             android:layout_marginTop="100dp"/>
 
+    <ImageView
+            android:id="@+id/inside_circle_image_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:src="@drawable/auth_scan_inside_circle"/>
+
+    <ImageView
+            android:id="@+id/outside_circle_image_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:src="@drawable/auth_scan_circle"/>
+
     <Button
             android:id="@+id/take_pic_button"
             android:layout_width="match_parent"
@@ -28,7 +42,8 @@
             android:text="拍摄"
             android:textColor="@color/white"
             android:textSize="16sp"
-            android:layout_alignParentBottom="true"/>
+            android:layout_alignParentBottom="true"
+            android:visibility="gone"/>
 
 </RelativeLayout>
 

@@ -23,7 +23,7 @@ public class IDCardAuthActivity extends Activity implements OnClickListener {
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.next_button:
-                Intent i = new Intent(this, IDCardDetectionActivity.class);
+                Intent i = new Intent(this, IDCardScanActivity.class);
                 startActivity(i);
                 finish();
                 break;

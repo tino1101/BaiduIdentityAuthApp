@@ -1,4 +1,4 @@
-package com.jun.baiduidentityauthapp.widget;
+package com.jun.baiduidentityauthapp.widget.api21;
 
 import android.content.Context;
 import android.graphics.*;
@@ -13,6 +13,7 @@ public class FaceScanView extends View {
     private int radius;
     private int xOffset;
     private int yOffset;
+    private Paint paint;
     private int viewWidth;
 
     public FaceScanView(Context context) {
@@ -29,6 +30,7 @@ public class FaceScanView extends View {
 
     private void init() {
         viewWidth = UiUtil.getScreenWidth(context) * 260 / 375 + 2 * UiUtil.dip2px(context, 20);
+        paint = new Paint();
         path = new Path();
         xOffset = viewWidth / 2;
         radius = UiUtil.getScreenWidth(context) * 260 / 375 / 2;
@@ -68,5 +70,11 @@ public class FaceScanView extends View {
         canvas.clipPath(path, Region.Op.XOR);
         canvas.drawColor(Color.BLACK);
         canvas.restore();
+        Bitmap insideCircleBitmap = BitmapFactory.decodeResource(context.getResources(), R.drawable.auth_scan_inside_circle);
+        Rect insideCircleRect = new Rect(0, 0, viewWidth, viewWidth);
+        Bitmap circleBitmap = BitmapFactory.decodeResource(context.getResources(), R.drawable.auth_scan_circle);
+        Rect circleRect = new Rect(0, 0, viewWidth, viewWidth);
+        canvas.drawBitmap(insideCircleBitmap, null, insideCircleRect, paint);
+        canvas.drawBitmap(circleBitmap, null, circleRect, paint);
     }
 }
