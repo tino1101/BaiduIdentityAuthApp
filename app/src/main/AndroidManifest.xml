@@ -27,6 +27,9 @@
                 android:name=".activity.LivingDetectionActivity"
                 android:screenOrientation="portrait"/>
         <activity
+                android:name=".activity.LivingDetection2Activity"
+                android:screenOrientation="portrait"/>
+        <activity
                 android:name=".activity.IDCardDetectionActivity"
                 android:screenOrientation="landscape"
                 android:configChanges="orientation|keyboardHidden|screenSize"/>

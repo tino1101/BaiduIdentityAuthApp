@@ -4,18 +4,18 @@ import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.media.ThumbnailUtils;
+import android.graphics.ImageFormat;
+import android.graphics.Rect;
+import android.graphics.YuvImage;
+import android.hardware.Camera;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
-import android.provider.MediaStore;
 import android.text.TextUtils;
 import android.util.Base64;
 import android.util.Log;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.animation.LinearInterpolator;
@@ -41,7 +41,7 @@ import java.util.Date;
 /**
  * 活体检测
  */
-public class LivingDetectionActivity extends Activity implements OnClickListener {
+public class LivingDetection2Activity extends Activity {
 
     private CameraPreview mCameraPreview;
     private FaceScanView faceScanView;
@@ -49,28 +49,17 @@ public class LivingDetectionActivity extends Activity implements OnClickListener
     private ImageView outsideCircleImageView;
     public static String livingImage = "";
 
-
-    /**
-     * 录制视频输出文件
-     */
-    private File mVideoFile;
-    /**
-     * 截图输出文件
-     */
-    private File mPicFile;
-    /**
-     * 是否录制视频中
-     */
-    private boolean mIsShooting;
     /**
      * 检测失败重试，最多三次
      */
     private int tryTime;
 
     private boolean isStop;
-    private String videoFileParent = "";
     private String picFileParent = "";
-
+    /**
+     * 截图输出文件
+     */
+    private File mPicFile;
 
     private Handler mHandler = new Handler() {
         @Override
@@ -78,35 +67,13 @@ public class LivingDetectionActivity extends Activity implements OnClickListener
             super.handleMessage(msg);
             switch (msg.what) {
                 case 0:
-                    clear();
-                    mIsShooting = true;
-                    try {
-                        Log.i("LivingDetection", "开始第" + (tryTime + 1) + "次录像");
-                        mVideoFile = mCameraPreview.startRecordVideo();
-                        if (null != mVideoFile && TextUtils.isEmpty(videoFileParent))
-                            videoFileParent = mVideoFile.getParent();
-                        mHandler.sendEmptyMessageDelayed(1, 500);
-                    } catch (Exception e) {
-                        toLivingBodyAuthFailureActivity();
-                    }
+                    mPicFile = null;
+                    mCameraPreview.setOneShotPreviewCallback();
                     break;
                 case 1:
-                    mHandler.sendEmptyMessageDelayed(2, 500);
-                    break;
-                case 2:
-                    if (mIsShooting) {
-                        try {
-                            Log.i("LivingDetection", "结束第" + (tryTime + 1) + "次录像");
-                            stopVideoRecord();
-                        } catch (Exception e) {
-                            toLivingBodyAuthFailureActivity();
-                        }
-                    }
-                    break;
-                case 3:
                     toIDCardAuthActivity();
                     break;
-                case 4:
+                case 2:
                     toLivingBodyAuthFailureActivity();
                     break;
             }
@@ -114,14 +81,14 @@ public class LivingDetectionActivity extends Activity implements OnClickListener
     };
 
     private void toIDCardAuthActivity() {
-        Log.i("LivingDetection", "跳转身份证识别");
+        Log.i("LivingDetection1", "跳转身份证识别");
         cancel();
         startActivity(new Intent(this, IDCardAuthActivity.class));
         finish();
     }
 
     private void toLivingBodyAuthFailureActivity() {
-        Log.i("LivingDetection", "跳转验证失败");
+        Log.i("LivingDetection1", "跳转验证失败");
         cancel();
         startActivity(new Intent(this, LivingAuthFailureActivity.class));
         finish();
@@ -134,7 +101,7 @@ public class LivingDetectionActivity extends Activity implements OnClickListener
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         setContentView(R.layout.activity_living_detection);
         initViews();
-        mHandler.sendEmptyMessageDelayed(0, 1000);
+        mHandler.sendEmptyMessageDelayed(0, 2000);
     }
 
     private void startRotation(View target, float... values) {
@@ -159,16 +126,48 @@ public class LivingDetectionActivity extends Activity implements OnClickListener
         outsideCircleImageView.setLayoutParams(params);
         startRotation(insideCircleImageView, 0f, 360f);
         startRotation(outsideCircleImageView, 0f, -360f);
-    }
-
-    @Override
-    public void onClick(View v) {
-        switch (v.getId()) {
-            case R.id.take_pic_button:
-                mCameraPreview.takePicture();
-                break;
-            default:
-        }
+        mCameraPreview.setOnTakePicCallBack(new CameraPreview.OnTakePicCallBack() {
+            @Override
+            public void onPictureTaken(final byte[] bytes) {
+                if (tryTime == 0) {
+                    tryTime++;
+                    return;
+                }
+                Observable.create(new ObservableOnSubscribe<File>() {
+                    @Override
+                    public void subscribe(ObservableEmitter<File> emitter) throws Exception {
+                        Log.i("LivingDetection1", "当前线程：" + Thread.currentThread().getName());
+                        mPicFile = getOutputPicFile();
+                        if (mPicFile == null) {
+                            emitter.onNext(null);
+                            emitter.onComplete();
+                            return;
+                        }
+                        Camera.Size size = mCameraPreview.getPreviewSize(); //获取预览大小
+                        if (null != size) {
+                            final int w = size.width;  //宽度
+                            final int h = size.height;
+                            final YuvImage image = new YuvImage(bytes, ImageFormat.NV21, w, h, null);
+                            ByteArrayOutputStream os = new ByteArrayOutputStream(bytes.length);
+                            if (image.compressToJpeg(new Rect(0, 0, w, h), 100, os)) {
+                                byte[] tmp = os.toByteArray();
+                                byte2File(tmp);
+                                livingImage = Base64.encodeToString(tmp, Base64.DEFAULT);
+                            }
+                        }
+                        emitter.onNext(mPicFile);
+                        emitter.onComplete();
+                    }
+                }).subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(new Consumer<File>() {
+                            @Override
+                            public void accept(File file) throws Exception {
+                                if (null != mPicFile) faceVerify();
+                            }
+                        });
+            }
+        });
     }
 
     /**
@@ -181,14 +180,14 @@ public class LivingDetectionActivity extends Activity implements OnClickListener
                 if (!isStop) {
                     if (null != faceVerifyResponse && faceVerifyResponse.getError_code() == 0 && null != faceVerifyResponse.getResult()
                             && faceVerifyResponse.getResult().getFace_liveness() > 0.393241) {
-                        Log.i("LivingDetection", "第" + (tryTime + 1) + "次认证结果：成功");
-                        mHandler.sendEmptyMessage(3);
+                        Log.i("LivingDetection1", "第" + tryTime + "次认证结果：成功");
+                        mHandler.sendEmptyMessage(1);
                     } else {
-                        Log.i("LivingDetection", "第" + (tryTime + 1) + "次认证结果：失败");
-                        if (tryTime > 1) {
-                            mHandler.sendEmptyMessage(4);
+                        Log.i("LivingDetection1", "第" + tryTime + "次认证结果：失败");
+                        if (tryTime > 2) {
+                            mHandler.sendEmptyMessage(2);
                         } else {
-                            Log.i("LivingDetection", "第" + (tryTime + 2) + "次尝试");
+                            Log.i("LivingDetection1", "第" + (tryTime + 1) + "次尝试");
                             mHandler.sendEmptyMessage(0);
                         }
                     }
@@ -216,56 +215,46 @@ public class LivingDetectionActivity extends Activity implements OnClickListener
         mHandler.removeMessages(0);
         mHandler.removeMessages(1);
         mHandler.removeMessages(2);
-        mHandler.removeMessages(3);
-        mHandler.removeMessages(4);
     }
 
-    private void clear() {
-        mVideoFile = null;
-        mPicFile = null;
-        mIsShooting = false;
-    }
-
-    private void stopVideoRecord() {
-        mCameraPreview.stopRecordCamera();
-        mIsShooting = false;
-        if (mVideoFile == null) {
-            return;
-        }
-        mPicFile = getOutputPicFile();
-        if (mPicFile == null) {
-            return;
-        }
-        Observable.create(new ObservableOnSubscribe<File>() {
+    @Override
+    public void onDestroy() {
+        mCameraPreview.releaseRes();
+        super.onDestroy();
+        cancel();
+        Observable.just(picFileParent).subscribeOn(Schedulers.io()).subscribe(new Consumer<String>() {
             @Override
-            public void subscribe(ObservableEmitter<File> emitter) throws Exception {
-                Bitmap bitmap = ThumbnailUtils.createVideoThumbnail(mVideoFile.getPath(), MediaStore.Images.Thumbnails.MINI_KIND);
-                FileOutputStream fout = null;
+            public void accept(String folder) throws Exception {
+                if (!TextUtils.isEmpty(folder)) delFolder(folder);
+            }
+        });
+    }
+
+    public void byte2File(byte[] buf) {
+        BufferedOutputStream bos = null;
+        FileOutputStream fos = null;
+        try {
+            fos = new FileOutputStream(mPicFile);
+            bos = new BufferedOutputStream(fos);
+            bos.write(buf);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (bos != null) {
                 try {
-                    fout = new FileOutputStream(mPicFile);
-                    BufferedOutputStream bos = new BufferedOutputStream(fout);
-                    bitmap.compress(Bitmap.CompressFormat.JPEG, 100, bos);
-                    bos.flush();
                     bos.close();
-                } catch (Exception e) {
+                } catch (IOException e) {
                     e.printStackTrace();
                 }
-                emitter.onNext(mPicFile);
-                emitter.onComplete();
             }
-        }).subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Consumer<File>() {
-                    @Override
-                    public void accept(File file) throws Exception {
-                        if (null != file) {
-                            byte[] bytes = File2byte(file.getPath());
-                            livingImage = Base64.encodeToString(bytes, Base64.DEFAULT);
-                            faceVerify();
-                        }
-
-                    }
-                });
+            if (fos != null) {
+                try {
+                    fos.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
     }
 
     private File getOutputPicFile() {
@@ -286,19 +275,6 @@ public class LivingDetectionActivity extends Activity implements OnClickListener
         if (null != mediaFile && TextUtils.isEmpty(picFileParent))
             picFileParent = mediaFile.getParent();
         return mediaFile;
-    }
-
-    @Override
-    public void onDestroy() {
-        mCameraPreview.releaseRes();
-        super.onDestroy();
-        cancel();
-        Observable.just(videoFileParent, picFileParent).subscribeOn(Schedulers.io()).subscribe(new Consumer<String>() {
-            @Override
-            public void accept(String folder) throws Exception {
-                if (!TextUtils.isEmpty(folder)) delFolder(folder);
-            }
-        });
     }
 
     /**
@@ -349,27 +325,5 @@ public class LivingDetectionActivity extends Activity implements OnClickListener
             System.out.println("删除文件夹操作出错");
             e.printStackTrace();
         }
-    }
-
-    public byte[] File2byte(String filePath) {
-        byte[] buffer = null;
-        try {
-            File file = new File(filePath);
-            FileInputStream fis = new FileInputStream(file);
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            byte[] b = new byte[1024];
-            int n;
-            while ((n = fis.read(b)) != -1) {
-                bos.write(b, 0, n);
-            }
-            fis.close();
-            bos.close();
-            buffer = bos.toByteArray();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return buffer;
     }
 }

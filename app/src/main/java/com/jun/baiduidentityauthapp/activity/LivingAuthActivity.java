@@ -34,7 +34,7 @@ public class LivingAuthActivity extends Activity implements OnClickListener {
 //                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
 //                    intent = new Intent(this, com.jun.baiduidentityauthapp.activity.api21.LivingDetectionActivity.class);
 //                } else {
-                    intent = new Intent(this, com.jun.baiduidentityauthapp.activity.LivingDetectionActivity.class);
+                    intent = new Intent(this, com.jun.baiduidentityauthapp.activity.LivingDetection2Activity.class);
 //                }
                 startActivity(intent);
                 finish();

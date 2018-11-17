@@ -29,7 +29,7 @@ public class LivingAuthFailureActivity extends Activity implements OnClickListen
                 finish();
                 break;
             case R.id.try_again_button:
-                startActivity(new Intent(this, LivingDetectionActivity.class));
+                startActivity(new Intent(this, LivingDetection2Activity.class));
                 finish();
                 break;
             default:

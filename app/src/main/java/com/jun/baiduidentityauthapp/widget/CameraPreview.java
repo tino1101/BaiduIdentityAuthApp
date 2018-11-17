@@ -416,13 +416,28 @@ public class CameraPreview extends GLSurfaceView implements GLSurfaceView.Render
             List<String> focusModes = parameters.getSupportedFocusModes();
             if (focusModes.contains(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO))
                 parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO);
-
             mCamera.setParameters(parameters);
+            setOneShotPreviewCallback();
             mCamera.startPreview();
             isPreviewing = true;
 
         } catch (Exception e) {
             Log.d(LOG_TAG, "Error starting camera preview: " + e.getMessage());
+        }
+    }
+
+    Camera.PreviewCallback mJpegPreviewCallback = new Camera.PreviewCallback() {
+        @Override
+        public void onPreviewFrame(byte[] data, Camera camera) {
+            if (mOnTakePicCallBack != null) {
+                mOnTakePicCallBack.onPictureTaken(data);
+            }
+        }
+    };
+
+    public void setOneShotPreviewCallback() {
+        if (null != mCamera) {
+            mCamera.setOneShotPreviewCallback(mJpegPreviewCallback);
         }
     }
 
@@ -622,4 +637,10 @@ public class CameraPreview extends GLSurfaceView implements GLSurfaceView.Render
     };
 
 
+    public Size getPreviewSize() {
+        if (null != mCamera) {
+            return mCamera.getParameters().getPreviewSize();
+        }
+        return null;
+    }
 }
